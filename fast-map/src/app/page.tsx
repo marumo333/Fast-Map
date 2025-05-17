@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
 import type { LatLngExpression } from 'leaflet';
+import { useMapEvents } from 'react-leaflet';
 
 // LeafletのCSSを動的にインポート
 import 'leaflet/dist/leaflet.css';
@@ -44,11 +45,20 @@ const createCustomIcon = (type: 'current' | 'destination') => {
   });
 };
 
+// クリックイベント用サブコンポーネント
+function MapClickHandler({ onClick }: { onClick: (lat: number, lng: number) => void }) {
+  useMapEvents({
+    click(e) {
+      onClick(e.latlng.lat, e.latlng.lng);
+    }
+  });
+  return null;
+}
+
 export default function Home() {
   const [position, setPosition] = useState<LatLngExpression>([35.6812, 139.7671]); // 東京駅の座標
   const [isMounted, setIsMounted] = useState(false);
   const [destination, setDestination] = useState<LatLngExpression | null>(null);
-  const mapRef = useRef<any>(null);
 
   useEffect(() => {
     setIsMounted(true);
@@ -67,16 +77,8 @@ export default function Home() {
   }, []);
 
   // 地図クリック時の処理
-  const handleMapClick = (e: any) => {
-    console.log('Map clicked:', e.latlng);
-    setDestination([e.latlng.lat, e.latlng.lng]);
-  };
-
-  // 地図の準備ができたときの処理
-  const handleMapReady = () => {
-    if (mapRef.current) {
-      mapRef.current.on('click', handleMapClick);
-    }
+  const handleMapClick = (lat: number, lng: number) => {
+    setDestination([lat, lng]);
   };
 
   if (!isMounted) {
@@ -89,13 +91,12 @@ export default function Home() {
         center={position}
         zoom={13}
         style={{ height: '100%', width: '100%' }}
-        ref={mapRef}
-        whenReady={handleMapReady}
       >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
+        <MapClickHandler onClick={handleMapClick} />
         <Marker position={position} icon={createCustomIcon('current')}>
           <Popup>
             <div>
