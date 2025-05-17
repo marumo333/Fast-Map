@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import type { LatLngExpression } from 'leaflet';
 
@@ -48,6 +48,7 @@ export default function Home() {
   const [position, setPosition] = useState<LatLngExpression>([35.6812, 139.7671]); // 東京駅の座標
   const [isMounted, setIsMounted] = useState(false);
   const [destination, setDestination] = useState<LatLngExpression | null>(null);
+  const mapRef = useRef<any>(null);
 
   useEffect(() => {
     setIsMounted(true);
@@ -71,6 +72,13 @@ export default function Home() {
     setDestination([e.latlng.lat, e.latlng.lng]);
   };
 
+  // 地図の準備ができたときの処理
+  const handleMapReady = () => {
+    if (mapRef.current) {
+      mapRef.current.on('click', handleMapClick);
+    }
+  };
+
   if (!isMounted) {
     return <div className="w-full h-screen flex items-center justify-center">地図を読み込み中...</div>;
   }
@@ -81,13 +89,12 @@ export default function Home() {
         center={position}
         zoom={13}
         style={{ height: '100%', width: '100%' }}
+        ref={mapRef}
+        whenReady={handleMapReady}
       >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          eventHandlers={{
-            click: handleMapClick
-          }}
         />
         <Marker position={position} icon={createCustomIcon('current')}>
           <Popup>
