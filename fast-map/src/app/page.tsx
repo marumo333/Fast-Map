@@ -24,10 +24,6 @@ const Popup = dynamic(
   () => import('react-leaflet').then((mod) => mod.Popup),
   { ssr: false }
 );
-const useMapEvents = dynamic(
-  () => import('react-leaflet').then((mod) => mod.useMapEvents),
-  { ssr: false }
-);
 
 // カスタムマーカーアイコンの設定
 const createCustomIcon = (type: 'current' | 'destination') => {
@@ -47,16 +43,6 @@ const createCustomIcon = (type: 'current' | 'destination') => {
     shadowSize: [41, 41]
   });
 };
-
-// 地図イベントを処理するコンポーネント
-function MapEvents({ onMapClick }: { onMapClick: (lat: number, lng: number) => void }) {
-  const map = useMapEvents({
-    click: (e) => {
-      onMapClick(e.latlng.lat, e.latlng.lng);
-    },
-  });
-  return null;
-}
 
 export default function Home() {
   const [position, setPosition] = useState<LatLngExpression>([35.6812, 139.7671]); // 東京駅の座標
@@ -80,9 +66,9 @@ export default function Home() {
   }, []);
 
   // 地図クリック時の処理
-  const handleMapClick = (lat: number, lng: number) => {
-    console.log('Map clicked:', { lat, lng });
-    setDestination([lat, lng]);
+  const handleMapClick = (e: any) => {
+    console.log('Map clicked:', e.latlng);
+    setDestination([e.latlng.lat, e.latlng.lng]);
   };
 
   if (!isMounted) {
@@ -95,12 +81,14 @@ export default function Home() {
         center={position}
         zoom={13}
         style={{ height: '100%', width: '100%' }}
+        eventHandlers={{
+          click: handleMapClick
+        }}
       >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
-        <MapEvents onMapClick={handleMapClick} />
         <Marker position={position} icon={createCustomIcon('current')}>
           <Popup>
             <div>
