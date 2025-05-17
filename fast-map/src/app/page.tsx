@@ -81,7 +81,7 @@ export default function Home() {
         center={position}
         zoom={13}
         style={{ height: '100%', width: '100%' }}
-        whenCreated={(map) => {
+        whenReady={(map) => {
           map.on('click', handleMapClick);
         }}
       >
